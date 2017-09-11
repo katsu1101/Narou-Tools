@@ -20,19 +20,20 @@ $syosetu_list = $narou->getSyosetuList();
 <html>
 <head>
     <title><?= PAGE_TITLE ?></title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/index.css">
 </head>
 <body>
+
 <h1><?= PAGE_TITLE ?></h1>
-<div>
+<div class="container-fluid">
     <?php
     foreach ($syosetu_list as $ncode) {
-        $syosetu_info = $narou->getSyosetuInfo($ncode);
-        echo "$ncode<br>";
-        echo "タイトル：{$syosetu_info['title']}<br>\n";
-        //print_r($syosetu_info);
-        echo '<a href="impression.php?n=' . $syosetu_info['n_no'] . '">感想一覧を取得</a>';
+        list($allcount, $syosetu_info) = $narou->getSyosetuInfo($ncode);
+        $narou->putSyosetuInfo($syosetu_info);
     }
     ?>
 </div>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 </body>
 </html>

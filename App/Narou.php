@@ -34,80 +34,50 @@ class Narou
      */
     public function getSyosetuInfo($ncode)
     {
-        $syosetu_file_path = self::SYOSETU_INFO_DIR . $ncode . '.txt';
+        $syosetu_file_path = self::SYOSETU_INFO_DIR . $ncode . '.json';
 
         if (file_exists($syosetu_file_path)) {
             // 小説情報が保存されているので、読み込んで返す
-            return unserialize(file_get_contents($syosetu_file_path));
+            return json_decode(file_get_contents($syosetu_file_path), true);
         }
 
         // データが保存されていないのでサイトにアクセスして取得してくる。
         //http://api.syosetu.com/novelapi/api/?of=t-w&ncode=n0001a
         //of=t-w-u-s-gf-gl-l-ti-gp--f-r-a-ah--sa&
-        $page = file_get_contents(self::NAROU_API . '?ncode=' . $ncode);
-        //echo $page;
-        //$syosetu_info = $this->analysis($page);
+        $page = file_get_contents(self::NAROU_API . '?out=json&ncode=' . $ncode);
 
         // 保存
         $this->saveSyosetuInfo($syosetu_file_path, $page);
 
-        //return $syosetu_info;
-        return unserialize($page) ;
+        return json_decode($page, true);
     }
 
-    private function analysis($page)
+    public function getImpressionNo($ncode)
     {
-        // n6451cr
-        // タイトル
-        $title = [];
-        if (preg_match('(<title>(.*?)<\/title>)', $page, $matches)) {
-            // <title>時空魔法で異世界と地球を行ったり来たり</title>
-            $title = $matches[1];
-        }
+        $n1 = substr($ncode, 1, 4);
+        $n2 = substr($ncode, 5, 1);
+        $n3 = substr($ncode, 6, 1);
 
-        // NNo（感想、レビュー用No）
-        $n_no = '';
-        if (preg_match('(<li><a href="http://novelcom.syosetu.com/impression/list/ncode/([0-9]*?)/">感想</a></li>)', $page, $matches)) {
-            // <li><a href="http://novelcom.syosetu.com/impression/list/ncode/696382/">感想</a></li>
-            $n_no = $matches[1];
-        }
+        return $n1 + ((ord($n2) - ord('A')) * 26 * 9999)
+            + ((ord($n3) - ord('A')) * 9999);
+    }
 
-        // 作者
-        $user_id = '';
-        $user_name = '';
-        if (preg_match('(作者：<a href="http://mypage.syosetu.com/([0-9]*?)/">(.*?)</a>)', $page, $matches)) {
-            // 作者：<a href="http://mypage.syosetu.com/11839/">かつ</a>
-            $user_id = $matches[1];
-            $user_name = $matches[2];
-        }
-
-        // あらすじ
-        $ex = '';
-        if (preg_match('(<div id="novel_ex">(.*?)</div>)s', $page, $matches)) {
-            /*
-<div id="novel_ex">召喚先の異世界でスキルをもらったけど、王様の態度がムカついたので、お姫様をさらって地球に帰って来ちゃった。<br />
-もらったスキルで異世界と地球を行ったり来たりしながら、さらってきたお姫様と妹と３人で楽しく暮らしていきます。<br />
-さらに奴隷少女を貰って、二人目の妹にしました。<br />
-※２０１７年８月末、３巻が発売されました。<br />
-　レーベル：モンスター文庫<br />
-　イラスト：DSマイル<br />
-　価格：\630</div>
-            */
-            $ex = $matches[1];
-        }
-
-        return [
-            'title' => $title,
-            'n_no' => $n_no,
-            'user_id' => $user_id,
-            'user_name' => $user_name,
-            'ex' => $ex,
-        ];
+    public function putSyosetuInfo($syosetu_info)
+    {
+        ?>
+<table class="table">
+    <tr><th>Nコード</th><td><?= $syosetu_info['ncode'] ?></td></tr>
+    <tr><th>小説名</th><td><?= $syosetu_info['title'] ?></td></tr>
+    <tr><th>作者名</th><td><?= $syosetu_info['writer'] ?>(<?= $syosetu_info['userid'] ?>)</td></tr>
+    <tr><th>小説のあらすじ</th><td><pre><?= $syosetu_info['story'] ?></pre></td></tr>
+    <tr><th>感想ページ用No</th><td><?= $this->getImpressionNo($syosetu_info['ncode']) ?></td></tr>
+</table>
+<?php
     }
 
     /**
      * @param string $syosetu_file_path
-     * @param array $page
+     * @param string $page
      */
     private function saveSyosetuInfo($syosetu_file_path, $page)
     {
