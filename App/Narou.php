@@ -12,6 +12,7 @@ namespace App;
 class Narou
 {
     const SYOSETU_URL = 'http://ncode.syosetu.com/';
+    const NAROU_API = 'http://api.syosetu.com/novelapi/api/';
     const NCODE_LIST_FILE_PATH = __DIR__ . '/../Storage/ncode_list.txt';
     const SYOSETU_INFO_DIR = __DIR__ . '/../Storage/Syosetu/';
 
@@ -33,22 +34,25 @@ class Narou
      */
     public function getSyosetuInfo($ncode)
     {
-        $syosetu_file_path = self::SYOSETU_INFO_DIR . $ncode . '.json';
+        $syosetu_file_path = self::SYOSETU_INFO_DIR . $ncode . '.txt';
 
         if (file_exists($syosetu_file_path)) {
             // 小説情報が保存されているので、読み込んで返す
-            return json_decode(file_get_contents($syosetu_file_path), true);
+            return unserialize(file_get_contents($syosetu_file_path));
         }
 
         // データが保存されていないのでサイトにアクセスして取得してくる。
-
-        $page = file_get_contents(self::SYOSETU_URL . $ncode);
-        $syosetu_info = $this->analysis($page);
+        //http://api.syosetu.com/novelapi/api/?of=t-w&ncode=n0001a
+        //of=t-w-u-s-gf-gl-l-ti-gp--f-r-a-ah--sa&
+        $page = file_get_contents(self::NAROU_API . '?ncode=' . $ncode);
+        //echo $page;
+        //$syosetu_info = $this->analysis($page);
 
         // 保存
-        $this->saveSyosetuInfo($syosetu_file_path, $syosetu_info);
+        $this->saveSyosetuInfo($syosetu_file_path, $page);
 
-        return $syosetu_info;
+        //return $syosetu_info;
+        return unserialize($page) ;
     }
 
     private function analysis($page)
@@ -103,10 +107,10 @@ class Narou
 
     /**
      * @param string $syosetu_file_path
-     * @param array $syosetu_info
+     * @param array $page
      */
-    private function saveSyosetuInfo($syosetu_file_path, $syosetu_info)
+    private function saveSyosetuInfo($syosetu_file_path, $page)
     {
-        file_put_contents($syosetu_file_path, json_encode($syosetu_info));
+        file_put_contents($syosetu_file_path, $page);
     }
 }
