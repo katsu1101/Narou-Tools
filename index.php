@@ -29,7 +29,10 @@ $syosetu_list = $narou->getSyosetuList();
 <div class="container-fluid">
     <?php
     foreach ($syosetu_list as $ncode) {
-        list($allcount, $syosetu_info) = $narou->getSyosetuInfo($ncode);
+        if (!$ncode) {
+            continue;
+        }
+        list($allcount, $syosetu_info) = $narou->getSyosetuInfo(trim($ncode));
         $narou->putSyosetuInfo($syosetu_info);
     }
     ?>
